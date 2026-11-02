@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDGs 性別平權 - 第一關</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e2f0d9;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頁首 Header */
+        header {
+            height: 60px;
+            background-color: #2e7d32;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 20;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .score-board {
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        .bgm-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid white;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .bgm-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 村莊地圖區域 */
+        #map {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #87ceeb 0%, #e0f7fa 45%, #c8e6c9 45%, #a5d6a7 100%);
+            overflow: hidden;
+            border-top: 4px solid #1b5e20;
+        }
+
+        /* 可點擊的熱氣球樣式 */
+        .interactive-balloon {
+            position: absolute;
+            width: 75px;
+            height: 90px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, opacity 0.3s, filter 0.2s;
+            z-index: 10;
+            animation: floatUpDown 3s ease-in-out infinite alternate;
+        }
+
+        .interactive-balloon:hover {
+            transform: scale(1.2) !important;
+            filter: drop-shadow(0 6px 18px rgba(0,0,0,0.3));
+        }
+
+        .balloon-icon {
+            font-size: 52px;
+            line-height: 1;
+        }
+
+        .balloon-label {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #0288d1;
+            color: #01579b;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        @keyframes floatUpDown {
+            0% { transform: translateY(0px) rotate(-2deg); }
+            100% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        /* 背景樹木與花草裝飾 */
+        .decoration-tree {
+            position: absolute;
+            font-size: 32px;
+            opacity: 0.85;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        /* 通用 Modal 彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.65);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 520px;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            text-align: center;
+            position: relative;
+        }
+
+        /* 遊戲說明專用樣式 */
+        .intro-card h2 {
+            font-size: 26px;
+            color: #2e7d32;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e8f5e9;
+            padding-bottom: 10px;
+        }
+
+        .intro-rules {
+            text-align: left;
+            background: #f1f8e9;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 25px;
+            line-height: 1.8;
+            font-size: 15px;
+            color: #2e7d32;
+        }
+
+        .intro-rules p {
+            margin-bottom: 6px;
+        }
+
+        .intro-rules p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 置中的開始按鈕 */
+        .start-btn-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: white;
+            border: none;
+            padding: 14px 45px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(46, 125, 50, 0.6);
+            background: linear-gradient(135deg, #66bb6a, #1b5e20);
+        }
+
+        /* 題目對話框 */
+        .question-title {
+            font-size: 18px;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #f1f8e9;
+            border: 2px solid #81c784;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            color: #2e7d32;
+        }
+
+        .option-btn:hover {
+            background: #c8e6c9;
+            transform: translateY(-2px);
+        }
+
+        /* 結算面板 */
+        .result-card h2 {
+            font-size: 26px;
+            margin-bottom: 15px;
+        }
+
+        .result-card p {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #555;
+        }
+
+        .action-btn {
+            background: #2e7d32;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #1b5e20;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SDGs 性別平權</h1>
+        <div class="header-right">
+            <button class="bgm-btn" id="bgm-toggle-btn" onclick="toggleBGM()">🎵 BGM 關閉</button>
+            <div class="score-board">答對題數：<span id="correct-count">0</span> / 10</div>
+        </div>
+    </header>
+
+    <main id="map"></main>
+
+    <!-- 遊戲說明彈窗（網頁載入時即顯示） -->
+    <div class="modal-overlay" id="intro-modal">
+        <div class="modal-content intro-card">
+            <h2>🎈 遊戲說明</h2>
+            <div class="intro-rules">
+                <p>☆ 請點選畫面中的熱汽球，每個熱汽球搭配 1 題單選題。</p>
+                <p>☆ 答題後，不論對、錯，答過題的熱汽球都會消失。</p>
+                <p>☆ 答對的題數如果小於 8 題，就出現重新挑戰的訊息與按鈕，請重新挑戰。</p>
+                <p>☆ 答對 8 題(含)以上，可以進入下一個關卡。</p>
+                <p>☆ 全部的關卡完成，可以製作個人的過關證書喔！</p>
+            </div>
+            <div class="start-btn-container">
+                <button class="start-btn" onclick="startGame()">開始遊戲</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 題目彈窗 -->
+    <div class="modal-overlay" id="quiz-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="question-title" id="quiz-number">熱汽球挑戰</div>
+            <div class="question-text" id="quiz-text">題目載入中...</div>
+            <div class="options-grid" id="options-container"></div>
+        </div>
+    </div>
+
+    <!-- 遊戲結果彈窗 -->
+    <div class="modal-overlay" id="result-modal" style="display: none;">
+        <div class="modal-content result-card">
+            <h2 id="result-title">任務完成！</h2>
+            <p id="result-desc"></p>
+            <div id="result-action"></div>
+        </div>
+    </div>
+
+    <script>
+        // 10 題 SDGs 性別平權選擇題
+        const questions = [
+            {
+                q: "聯合國永續發展目標 (SDGs) 中，目標 5 (Goal 5) 的核心主題是什麼？",
+                options: ["消除貧窮", "良好健康與福祉", "實現性別平等與賦權所有婦女", "氣候行動"],
+                answer: 2
+            },
+            {
+                q: "下列何者屬於打破「性別刻板印象」的具體表現？",
+                options: ["認為男生不能哭泣", "鼓勵任何人選擇自己喜歡的職業（如男性幼保員、女性工程師）", "認為家務事應全部由女性承擔", "只有男生能擔任家長會會長"],
+                answer: 1
+            },
+            {
+                q: "「同工同酬」的意思是指什麼？",
+                options: ["工作時間一樣長就拿一樣薪水", "付出相同價值與內容的工作，不因性別而有薪資差異", "男生工作辛苦所以薪水比較高", "所有員工不論職位薪水都相同"],
+                answer: 1
+            },
+            {
+                q: "在職場或學校中，因性別、性傾向而受到不平等的對待或嘲笑，屬於什麼行為？",
+                options: ["幽默開玩笑", "性別歧視或霸凌", "正常的職場文化", "良性競爭"],
+                answer: 1
+            },
+            {
+                q: "關於「家務分擔」，以下何者是最符合性別平權的觀念？",
+                options: ["家務是媽媽一個人的責任", "家中的每個成員應依能力共同分擔家務", "爸爸只要負責出外賺錢，完全不需要做家務", "家務都交給女生做比較細心"],
+                answer: 1
+            },
+            {
+                q: "「性別認同」是指什麼？",
+                options: ["身分證上的性別登記", "個人對自己性別的內在感受與自我認同", "醫生在出生時宣告的性別", "社會大眾對個人的期待"],
+                answer: 1
+            },
+            {
+                q: "在推進全球性別平等的過程中，提供女性平等的受教育機會有何影響？",
+                options: ["促進經濟成長與減少貧窮", "對社會沒有影響", "會降低男性的就業機會", "只影響教育界"],
+                answer: 0
+            },
+            {
+                q: "「產假」與「育嬰留職停薪」在性別平權的角度下，應如何看待？",
+                options: ["只有女性才可以申請育嬰假", "雙親皆應享有相關權利，共同承擔撫育下一代的責任", "申請育嬰假的人應該被開除", "這是給女性的特權"],
+                answer: 1
+            },
+            {
+                q: "當看到同伴受到基於性別的騷擾或歧視時，何者是正確的做法？",
+                options: ["旁觀並一起嘲笑", "保持沉默當作沒看到", "在安全前提下伸出援手或向信任的師長、權責單位求助", "檢討被害人"],
+                answer: 2
+            },
+            {
+                q: "促進性別平等需要誰的參與和努力？",
+                options: ["只需要女性努力", "只需要政府立法", "只需要學校宣導", "全社會所有人（包含所有性別）共同努力"],
+                answer: 3
+            }
+        ];
+
+        let currentQuestionIndex = -1;
+        let correctAnswers = 0;
+        let answeredCount = 0;
+        let isGameOver = false;
+
+        const map = document.getElementById('map');
+        const introModal = document.getElementById('intro-modal');
+        const quizModal = document.getElementById('quiz-modal');
+        const resultModal = document.getElementById('result-modal');
+        const correctCountEl = document.getElementById('correct-count');
+
+        // 開始遊戲：優先隱藏說明視窗，再初始化地圖與音效
+        function startGame() {
+            if (introModal) {
+                introModal.style.display = 'none';
+            }
+            initMap();
+            
+            // 安全嘗試啟動音效
+            try {
+                toggleBGM();
+            } catch (e) {
+                console.log("Audio auto-start skipped.");
+            }
+        }
+
+        // 初始化地圖內容
+        function initMap() {
+            // 1. 背景裝飾性樹木與花草
+            const trees = ['🌳', '🌲', '🌴', '🌻', '🌷'];
+            for(let i = 0; i < 12; i++) {
+                const tree = document.createElement('div');
+                tree.className = 'decoration-tree';
+                tree.innerText = trees[Math.floor(Math.random() * trees.length)];
+                tree.style.left = (Math.random() * 90) + '%';
+                tree.style.top = (Math.random() * 50 + 45) + '%';
+                map.appendChild(tree);
+            }
+
+            // 2. 隨機生成 10 個點擊熱氣球（位置在上半部 top: 5% ~ 40%，隨機放大 1.2、1.5 倍）
+            const scales = [1.2, 1.5, 1.3, 1.4];
+            const positions = [
+                {top: '8%', left: '8%'},   {top: '12%', left: '26%'}, {top: '6%', left: '48%'}, 
+                {top: '10%', left: '70%'}, {top: '15%', left: '88%'}, {top: '28%', left: '15%'}, 
+                {top: '32%', left: '38%'}, {top: '25%', left: '58%'}, {top: '30%', left: '78%'}, 
+                {top: '38%', left: '92%'}
+            ];
+
+            questions.forEach((q, index) => {
+                const balloon = document.createElement('div');
+                balloon.className = 'interactive-balloon';
+                
+                const pos = positions[index];
+                balloon.style.top = pos.top;
+                balloon.style.left = pos.left;
+                
+                const randomScale = scales[Math.floor(Math.random() * scales.length)];
+                balloon.style.transform = `scale(${randomScale})`;
+
+                balloon.id = `balloon-${index}`;
+                
+                balloon.innerHTML = `
+                    <div class="balloon-icon">🎈</div>
+                    <div class="balloon-label">熱汽球 ${index + 1}</div>
+                `;
+
+                balloon.onclick = () => openQuiz(index);
+                map.appendChild(balloon);
+            });
+        }
+
+        // 開啟題目對話框
+        function openQuiz(index) {
+            if (isGameOver) return;
+            currentQuestionIndex = index;
+            const qData = questions[index];
+
+            document.getElementById('quiz-number').innerText = `🎈 熱汽球 ${index + 1} 號挑戰`;
+            document.getElementById('quiz-text').innerText = qData.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            qData.options.forEach((optText, optIdx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = `${String.fromCharCode(65 + optIdx)}. ${optText}`;
+                btn.onclick = () => checkAnswer(optIdx);
+                optionsContainer.appendChild(btn);
+            });
+
+            quizModal.style.display = 'flex';
+        }
+
+        // 檢查答案
+        function checkAnswer(selectedIndex) {
+            const qData = questions[currentQuestionIndex];
+            const balloonEl = document.getElementById(`balloon-${currentQuestionIndex}`);
+
+            quizModal.style.display = 'none';
+            
+            if (balloonEl) {
+                balloonEl.style.display = 'none';
+            }
+
+            answeredCount++;
+
+            if (selectedIndex === qData.answer) {
+                correctAnswers++;
+                correctCountEl.innerText = correctAnswers;
+            }
+
+            if (correctAnswers >= 8) {
+                isGameOver = true;
+                setTimeout(() => showFinalResult(true), 300);
+                return;
+            }
+
+            if (answeredCount === questions.length && correctAnswers < 8) {
+                isGameOver = true;
+                setTimeout(() => showFinalResult(false), 300);
+            }
+        }
+
+        // 顯示最終結算
+        function showFinalResult(isSuccess) {
+            const titleEl = document.getElementById('result-title');
+            const descEl = document.getElementById('result-desc');
+            const actionEl = document.getElementById('result-action');
+
+            if (isSuccess) {
+                titleEl.innerText = "🎉 任務成功！";
+                titleEl.style.color = "#2e7d32";
+                descEl.innerText = `恭喜您！答對了 ${correctAnswers} 題（達到 8 題以上門檻），順利通過本關！`;
+                actionEl.innerHTML = `<a href="level2.html" class="action-btn">前往下一個關卡 ➔</a>`;
+            } else {
+                titleEl.innerText = "💪 重新挑戰！";
+                titleEl.style.color = "#d32f2f";
+                descEl.innerText = `您答對了 ${correctAnswers} 題，未達 8 題過關標準。請點選下方按鈕重新挑戰！`;
+                actionEl.innerHTML = `<button onclick="location.reload()" class="action-btn">重新挑戰</button>`;
+            }
+
+            resultModal.style.display = 'flex';
+        }
+
+        // Web Audio API 背景音樂
+        let audioCtx = null;
+        let bgmInterval = null;
+        let isBgmPlaying = false;
+
+        function toggleBGM() {
+            const btn = document.getElementById('bgm-toggle-btn');
+            if (!isBgmPlaying) {
+                startBGM();
+                if (btn) btn.innerText = "🔊 BGM 開啟";
+                isBgmPlaying = true;
+            } else {
+                stopBGM();
+                if (btn) btn.innerText = "🎵 BGM 關閉";
+                isBgmPlaying = false;
+            }
+        }
+
+        function startBGM() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+            let noteIndex = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!isBgmPlaying) return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(notes[noteIndex], audioCtx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.8);
+
+                    noteIndex = (noteIndex + 1) % notes.length;
+                } catch(e) {}
+            }, 600);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+    </script>
+</body>
+</html>
